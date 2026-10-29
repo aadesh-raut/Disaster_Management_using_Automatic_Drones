@@ -31,3 +31,15 @@
 api_server
 
 drone_rescue
+
+# CMake build directories
+build/
+build-vcpkg/
+cmake-build-*/
+
+# vcpkg installed dependencies
+vcpkg_installed/
+
+# Compiled executables
+drone_rescue
+api_server
