@@ -734,6 +734,42 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4858565865334097509, guid: 3eb0f9677045eae4d855b4e4d05ed69a, type: 3}
+--- !u!1 &171625678
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 171625679}
+  m_Layer: 0
+  m_Name: Drones
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &171625679
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 171625678}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -11.73, y: 0.75, z: 71.68}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 916780134}
+  - {fileID: 386713962}
+  - {fileID: 1723325422}
+  - {fileID: 597809622}
+  - {fileID: 977066113}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &172595515 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2268901527298622611, guid: 711bca12f8388764fbf913a5e2004a1d, type: 3}
@@ -1771,6 +1807,8 @@ MonoBehaviour:
   rooftopClearance: 3
   landingOffset: 1
   timeAtIncident: 2
+  parkingTolerance: 0.1
+  landingTolerance: 0.15
 --- !u!65 &386713959
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1857,12 +1895,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 386713957}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.86, y: 0.75, z: 80.78}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.13000011, y: 0, z: 9.099998}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 171625679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &395255934 stripped
 GameObject:
@@ -2557,6 +2595,8 @@ MonoBehaviour:
   rooftopClearance: 3
   landingOffset: 1
   timeAtIncident: 2
+  parkingTolerance: 0.1
+  landingTolerance: 0.15
 --- !u!65 &597809619
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2643,12 +2683,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 597809617}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.74, y: 0.75, z: 74.37}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.010000229, y: 0, z: 2.6900024}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 171625679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &618340333 stripped
 GameObject:
@@ -3684,6 +3724,8 @@ MonoBehaviour:
   rooftopClearance: 3
   landingOffset: 1
   timeAtIncident: 2
+  parkingTolerance: 0.1
+  landingTolerance: 0.15
 --- !u!65 &916780131
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3770,12 +3812,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 916780129}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -12, y: 0.75, z: 83.8}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.27000046, y: 0, z: 12.120003}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 171625679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &921752721 stripped
 GameObject:
@@ -4082,6 +4124,8 @@ MonoBehaviour:
   rooftopClearance: 3
   landingOffset: 1
   timeAtIncident: 2
+  parkingTolerance: 0.1
+  landingTolerance: 0.15
 --- !u!65 &977066110
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4168,12 +4212,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 977066108}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.73, y: 0.75, z: 71.68}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 171625679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &978588581 stripped
 GameObject:
@@ -5336,6 +5380,63 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 7534085653682730532, guid: bc6e1fd1c0a6cb5429e0b068fa8c49bc, type: 3}
+--- !u!1001 &1347872682
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -22.56509
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.0000011083655
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 77.19113
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
+      propertyPath: m_Name
+      value: quadcopter-original
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: -4161369568681901532, guid: 522dbbb988f9046e3844a25604e175c3, type: 3}
 --- !u!1 &1363243987 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 944286538443254607, guid: 711bca12f8388764fbf913a5e2004a1d, type: 3}
@@ -6462,6 +6563,8 @@ MonoBehaviour:
   rooftopClearance: 3
   landingOffset: 1
   timeAtIncident: 2
+  parkingTolerance: 0.1
+  landingTolerance: 0.15
 --- !u!65 &1723325419
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6548,12 +6651,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1723325417}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.76, y: 0.75, z: 77.6}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.030000687, y: 0, z: 5.919998}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 171625679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1726750565 stripped
 GameObject:
@@ -8736,10 +8839,7 @@ SceneRoots:
   - {fileID: 1892732419}
   - {fileID: 1946425463114685284}
   - {fileID: 5621172863203767927}
-  - {fileID: 916780134}
-  - {fileID: 386713962}
-  - {fileID: 1723325422}
-  - {fileID: 597809622}
-  - {fileID: 977066113}
+  - {fileID: 171625679}
   - {fileID: 426699410}
   - {fileID: 543826960}
+  - {fileID: 1347872682}
