@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "/Users/aadeshsanjayraut/.nvm/versions/node/v26.13.1/bin/npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/Users/aadeshsanjayraut/Documents/Aadesh Unity/City"
+            ]
+        }
+    }
+}
