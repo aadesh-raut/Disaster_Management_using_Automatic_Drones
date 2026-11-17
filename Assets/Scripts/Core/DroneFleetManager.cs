@@ -547,6 +547,86 @@ public class DroneFleetManager : MonoBehaviour
         isProcessingIncident = false;
     }
 
+    /// <summary>
+    /// Dispatches an available drone to a specified sector for an incident request.
+    /// Called by the interactive dashboard during batch commit.
+    /// </summary>
+    public IEnumerator DispatchIncidentSector(int destinationSector, int requestId, int priority, System.Action<bool> onComplete)
+    {
+        Transform targetWaypoint = waypointsParent != null ? waypointsParent.Find("Sector_" + destinationSector) : null;
+        if (targetWaypoint == null)
+        {
+            Debug.LogError($"[FleetManager] Destination waypoint Sector_{destinationSector} not found under Waypoints Parent.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        Vector3 incidentPosition = targetWaypoint.position;
+
+        Debug.Log($"[FleetManager] Dispatching for Request #{requestId} (Sector {destinationSector}, Priority {priority})");
+
+        // Request outbound route
+        RouteResponse outbound = null;
+        yield return StartCoroutine(RequestRoute(baseSector, destinationSector, res => outbound = res));
+
+        if (outbound == null)
+        {
+            Debug.LogError($"[FleetManager] Failed to get outbound route to Sector {destinationSector}");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        // Request returning route
+        RouteResponse returning = null;
+        yield return StartCoroutine(RequestRoute(destinationSector, baseSector, res => returning = res));
+
+        if (returning == null)
+        {
+            Debug.LogError($"[FleetManager] Failed to get return route from Sector {destinationSector}");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        // Select the eligible parked drone with lowest sufficient battery
+        DroneRouteController selectedDrone = null;
+        foreach (DroneRouteController drone in drones)
+        {
+            if (drone == null || !drone.IsAvailable)
+                continue;
+
+            if (Vector3.Distance(drone.transform.position, drone.HomePosition) > drone.landingTolerance)
+                continue;
+
+            if (!drone.CanCompleteRoundTrip(outbound.total_time, returning.total_time))
+                continue;
+
+            if (selectedDrone == null || drone.battery < selectedDrone.battery)
+            {
+                selectedDrone = drone;
+            }
+        }
+
+        if (selectedDrone == null)
+        {
+            Debug.LogWarning($"[FleetManager] No eligible parked drone with sufficient battery for Sector {destinationSector}. Request #{requestId} remains queued.");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        Debug.Log($"[FleetManager] Dispatched {selectedDrone.name} to Request #{requestId} at Sector_{destinationSector}. Battery: {selectedDrone.battery:F1}%");
+
+        selectedDrone.AssignMission(
+            incidentPosition,
+            destinationSector,
+            outbound.route,
+            returning.route,
+            outbound.total_time,
+            returning.total_time
+        );
+
+        onComplete?.Invoke(true);
+    }
+
     IEnumerator RequestRoute(
         int source,
         int destination,

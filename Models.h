@@ -47,9 +47,14 @@ struct Request {
 
 struct RequestComparator
 {
-    bool operator()(const Request& a, const Request& b)
+    // Lower integer = Higher priority (Priority 1 is processed before Priority 2..6)
+    // For equal priorities, earlier arrival (smaller request_id) is processed first.
+    bool operator()(const Request& a, const Request& b) const
     {
-        return a.priority_level < b.priority_level;
+        if (a.priority_level != b.priority_level) {
+            return a.priority_level > b.priority_level;
+        }
+        return a.request_id > b.request_id;
     }
 };
 

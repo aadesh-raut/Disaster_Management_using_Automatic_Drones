@@ -1,0 +1,113 @@
+# ==============================================================================
+# DISASTER MANAGEMENT USING AUTOMATIC DRONES - BACKEND REQUIREMENTS
+# ==============================================================================
+# This file lists all libraries, frameworks, compilers, build systems, and
+# VS Code extensions required to build, run, and debug the C++ backend.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. CORE BACKEND C++ LIBRARIES & FRAMEWORKS
+# ------------------------------------------------------------------------------
+# Crow C++ Framework:
+#   High-speed, header-only C++ web microframework used to run the HTTP REST API
+#   on port 8080 (serves /route endpoint for shortest path calculations).
+crow>=1.0.0
+
+# Asio C++ Library:
+#   Cross-platform C++ library for network and low-level I/O programming.
+#   (Automatically pulled as an internal dependency of Crow).
+asio>=1.28.0
+
+# System Threading:
+#   POSIX Threads / C++17 std::thread required by Crow for multi-threaded requests.
+threads (pthreads / C++17 STL)
+
+# C++ Standard Library (C++17):
+#   The backend code uses native C++17 STL features:
+#   - <vector> (Adjacency List graph representation & fleet tracking)
+#   - <queue>  (std::priority_queue for Min-Heap Dijkstra and Max-Heap Triage)
+#   - <fstream>, <sstream> (CSV parsing for city_nodes.csv & city_edges.csv)
+#   - <algorithm>, <climits>, <stdexcept>
+
+
+# ------------------------------------------------------------------------------
+# 2. C++ PACKAGE MANAGER (vcpkg)
+# ------------------------------------------------------------------------------
+# The project uses Microsoft vcpkg (manifest mode with vcpkg.json) to install Crow.
+#
+# Installation:
+#   macOS / Linux:
+#     git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+#     ~/vcpkg/bootstrap-vcpkg.sh
+#
+#   Windows (PowerShell):
+#     git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+#     C:\vcpkg\bootstrap-vcpkg.bat
+#     $env:VCPKG_ROOT = "C:\vcpkg"
+
+
+# ------------------------------------------------------------------------------
+# 3. BUILD TOOLS & COMPILERS
+# ------------------------------------------------------------------------------
+# CMake:
+#   Version 3.20 or newer required to configure and generate build files.
+cmake>=3.20
+
+# C++ Compiler with C++17 Support:
+#   - macOS: Apple Clang (Xcode Command Line Tools: run `xcode-select --install`)
+#   - Linux: GCC >= 9 or Clang >= 10
+#   - Windows: MSVC (Visual Studio 2019/2022 C++ Build Tools)
+
+
+# ------------------------------------------------------------------------------
+# 4. RECOMMENDED VS CODE EXTENSIONS
+# ------------------------------------------------------------------------------
+# Install these extensions in VS Code (Search by Extension ID):
+#
+# 1. C/C++ Extension Pack (IntelliSense, debugging, code browsing)
+#    Extension ID: ms-vscode.cpptools-extension-pack
+#
+# 2. CMake Tools (Configure, build, and debug CMake targets with 1-click in VS Code)
+#    Extension ID: ms-vscode.cmake-tools
+#
+# 3. CMake Language Support (Syntax highlighting and autocomplete for CMakeLists.txt)
+#    Extension ID: twxs.cmake
+
+
+# ------------------------------------------------------------------------------
+# 5. HOW TO BUILD & RUN IN VS CODE
+# ------------------------------------------------------------------------------
+# METHOD A: Via Terminal inside VS Code
+#   1. Open integrated terminal in VS Code (`Ctrl + ~` or `Cmd + ~`).
+#   2. Configure CMake with vcpkg toolchain:
+#      macOS/Linux:
+#        cmake -S . -B build-vcpkg -DCMAKE_TOOLCHAIN_FILE="$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake"
+#      Windows:
+#        cmake -S . -B build-vcpkg -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+#
+#   3. Build the project:
+#      cmake --build build-vcpkg
+#
+#   4. Start the backend API server:
+#      macOS/Linux:  ./build-vcpkg/api_server
+#      Windows:      .\build-vcpkg\Release\api_server.exe
+#
+# METHOD B: Via VS Code CMake Tools Extension (GUI)
+#   1. Open project folder in VS Code.
+#   2. In VS Code Settings (settings.json), set:
+#      "cmake.configureSettings": {
+#          "CMAKE_TOOLCHAIN_FILE": "${env:HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+#      }
+#   3. Select target: [api_server] from the bottom status bar.
+#   4. Click "Build" or press [F7].
+#   5. Click "Run" or press [Shift + F5].
+
+
+# ------------------------------------------------------------------------------
+# 6. OPTIONAL PYTHON UTILITIES (Used for presentation & doc generation)
+# ------------------------------------------------------------------------------
+# If running project automation scripts (build_deck.py, build_project_doc.py):
+python-pptx>=1.0.2
+python-docx>=1.2.0
+pillow>=10.0.0
+
