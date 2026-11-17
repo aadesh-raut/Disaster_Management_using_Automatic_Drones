@@ -1,3 +1,103 @@
+// using UnityEngine;
+// using UnityEngine.InputSystem;
+
+// public class CameraMovement : MonoBehaviour
+// {
+//     [Header("Movement Settings")]
+//     [SerializeField] private float moveSpeed = 5f;
+
+//     [Header("Mouse Look Settings")]
+//     [SerializeField] private float mouseSensitivity = 0.1f;
+
+//     private Vector2 moveInput;
+//     private float rotationX = 0f;
+//     private float rotationY = 0f;
+
+//     void Start()
+//     {
+//         // Keep the cursor visible and free by default so the user can interact with the UI dashboard
+//         Cursor.lockState = CursorLockMode.None;
+//         Cursor.visible = true;
+
+//         // Sync initial rotation with the camera's starting angles
+//         Vector3 currentRotation = transform.localEulerAngles;
+//         rotationX = currentRotation.x;
+//         rotationY = currentRotation.y;
+//     }
+
+//     void Update()
+//     {
+//         Mouse mouse = Mouse.current;
+//         if (mouse == null) return;
+
+//         // Hold RIGHT MOUSE BUTTON to look around and fly the camera (Unity Editor style).
+//         // This leaves LEFT CLICK 100% free for dashboard UI (inputs, dropdowns, buttons).
+//         if (mouse.rightButton.isPressed)
+//         {
+//             if (Cursor.lockState != CursorLockMode.Locked)
+//             {
+//                 Cursor.lockState = CursorLockMode.Locked;
+//                 Cursor.visible = false;
+//             }
+
+//             HandleMouseLook();
+//             HandleMovement();
+//         }
+//         else
+//         {
+//             // When right click is released, return cursor to free mode immediately
+//             if (Cursor.lockState != CursorLockMode.None)
+//             {
+//                 Cursor.lockState = CursorLockMode.None;
+//                 Cursor.visible = true;
+//             }
+//         }
+//     }
+
+//     private void HandleMouseLook()
+//     {
+//         Mouse mouse = Mouse.current;
+//         if (mouse == null) return;
+
+//         Vector2 mouseDelta = mouse.delta.ReadValue() * mouseSensitivity;
+
+//         rotationY += mouseDelta.x;
+//         rotationX -= mouseDelta.y;
+
+//         // Prevent the camera from flipping upside down
+//         rotationX = Mathf.Clamp(rotationX, -89f, 89f);
+
+//         transform.localRotation = Quaternion.Euler(rotationX, rotationY, 0f);
+//     }
+
+//     private void HandleMovement()
+//     {
+//         Keyboard keyboard = Keyboard.current;
+//         if (keyboard == null) return;
+
+//         moveInput = Vector2.zero;
+
+//         // WASD fly controls
+//         if (keyboard.wKey.isPressed) moveInput.y += 1f;
+//         if (keyboard.sKey.isPressed) moveInput.y -= 1f;
+//         if (keyboard.aKey.isPressed) moveInput.x -= 1f;
+//         if (keyboard.dKey.isPressed) moveInput.x += 1f;
+
+//         moveInput = moveInput.normalized;
+
+//         Vector3 forward = transform.forward;
+//         Vector3 right = transform.right;
+//         forward.y = 0f;
+//         right.y = 0f;
+//         forward.Normalize();
+//         right.Normalize();
+
+//         Vector3 moveDirection = (forward * moveInput.y) + (right * moveInput.x);
+
+//         transform.position += moveDirection * moveSpeed * Time.deltaTime;
+//     }
+// }
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,17 +109,16 @@ public class CameraMovement : MonoBehaviour
     [Header("Mouse Look Settings")]
     [SerializeField] private float mouseSensitivity = 0.1f;
 
-    private Vector2 moveInput;
     private float rotationX = 0f;
     private float rotationY = 0f;
 
     void Start()
     {
-        // Keep the cursor visible and free by default so the user can interact with the UI dashboard
+        // Keep the cursor visible and free by default for dashboard UI interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Sync initial rotation with the camera's starting angles
+        // Sync initial rotation with camera's starting orientation
         Vector3 currentRotation = transform.localEulerAngles;
         rotationX = currentRotation.x;
         rotationY = currentRotation.y;
@@ -30,8 +129,8 @@ public class CameraMovement : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
-        // Hold RIGHT MOUSE BUTTON to look around and fly the camera (Unity Editor style).
-        // This leaves LEFT CLICK 100% free for dashboard UI (inputs, dropdowns, buttons).
+        // Hold RIGHT MOUSE BUTTON to look around and fly the camera.
+        // Releasing Right Click keeps the cursor free for UI interaction.
         if (mouse.rightButton.isPressed)
         {
             if (Cursor.lockState != CursorLockMode.Locked)
@@ -45,7 +144,6 @@ public class CameraMovement : MonoBehaviour
         }
         else
         {
-            // When right click is released, return cursor to free mode immediately
             if (Cursor.lockState != CursorLockMode.None)
             {
                 Cursor.lockState = CursorLockMode.None;
@@ -64,7 +162,7 @@ public class CameraMovement : MonoBehaviour
         rotationY += mouseDelta.x;
         rotationX -= mouseDelta.y;
 
-        // Prevent the camera from flipping upside down
+        // Prevent flipping upside down
         rotationX = Mathf.Clamp(rotationX, -89f, 89f);
 
         transform.localRotation = Quaternion.Euler(rotationX, rotationY, 0f);
@@ -75,15 +173,18 @@ public class CameraMovement : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        moveInput = Vector2.zero;
+        Vector2 planarInput = Vector2.zero;
+        float verticalInput = 0f;
 
-        // WASD fly controls
-        if (keyboard.wKey.isPressed) moveInput.y += 1f;
-        if (keyboard.sKey.isPressed) moveInput.y -= 1f;
-        if (keyboard.aKey.isPressed) moveInput.x -= 1f;
-        if (keyboard.dKey.isPressed) moveInput.x += 1f;
+        // Horizontal planar flight (WASD)
+        if (keyboard.wKey.isPressed) planarInput.y += 1f;
+        if (keyboard.sKey.isPressed) planarInput.y -= 1f;
+        if (keyboard.aKey.isPressed) planarInput.x -= 1f;
+        if (keyboard.dKey.isPressed) planarInput.x += 1f;
 
-        moveInput = moveInput.normalized;
+        // Vertical elevation flight (Q = Down, E = Up)
+        if (keyboard.eKey.isPressed) verticalInput += 1f;
+        if (keyboard.qKey.isPressed) verticalInput -= 1f;
 
         Vector3 forward = transform.forward;
         Vector3 right = transform.right;
@@ -92,7 +193,13 @@ public class CameraMovement : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 moveDirection = (forward * moveInput.y) + (right * moveInput.x);
+        Vector3 moveDirection = (forward * planarInput.y) + (right * planarInput.x) + (Vector3.up * verticalInput);
+
+        // Normalize direction if moving diagonally or vertically so speed remains consistent
+        if (moveDirection.sqrMagnitude > 1f)
+        {
+            moveDirection.Normalize();
+        }
 
         transform.position += moveDirection * moveSpeed * Time.deltaTime;
     }

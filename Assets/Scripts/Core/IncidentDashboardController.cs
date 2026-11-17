@@ -146,7 +146,6 @@ public class IncidentDashboardController : MonoBehaviour
         TextMeshProUGUI details = card.GetComponentInChildren<TextMeshProUGUI>();
         if (details != null)
         {
-            // Clean columnar display
             details.text = $"#{req.requestId}          Sector {req.destinationSector}          {req.incidentType}          P{req.priority}";
         }
 
@@ -177,7 +176,7 @@ public class IncidentDashboardController : MonoBehaviour
     }
 
     /// <summary>
-    /// Triggers the 2-second buffer and batch dispatch sequence.
+    /// Triggers the 5-second buffer and batch dispatch sequence.
     /// </summary>
     public void OnCommitBatchClicked()
     {
@@ -199,16 +198,6 @@ public class IncidentDashboardController : MonoBehaviour
         if (commitButton != null) commitButton.interactable = false;
         if (addRequestButton != null) addRequestButton.interactable = false;
 
-        if (commitButtonText != null)
-        {
-            commitButtonText.text = "PROCESSING BATCH...";
-        }
-
-        UpdateStatus("Committing batch to backend. Prioritizing requests...", Color.cyan);
-
-        // 2-second buffer as requested
-        yield return new WaitForSeconds(2.0f);
-
         // Sort pending requests by Priority ASCENDING (1 is highest, then 2, etc.)
         // Secondary sort: earlier requestId first
         pendingRequests.Sort((a, b) =>
@@ -218,7 +207,7 @@ public class IncidentDashboardController : MonoBehaviour
             return a.requestId.CompareTo(b.requestId);
         });
 
-        // Reorder visual cards in the container to reflect priority order!
+        // Instantly reorder visual cards in the container to reflect priority order!
         for (int i = 0; i < pendingRequests.Count; i++)
         {
             int reqId = pendingRequests[i].requestId;
@@ -229,7 +218,22 @@ public class IncidentDashboardController : MonoBehaviour
             }
         }
 
-        UpdateStatus($"Batch sorted. Dispatching {pendingRequests.Count} request(s) by priority...", Color.green);
+        // 5-second countdown buffer to allow switching Game View to Display 1
+        for (int secondsLeft = 5; secondsLeft > 0; secondsLeft--)
+        {
+            if (commitButtonText != null)
+            {
+                commitButtonText.text = $"DISPATCHING IN {secondsLeft}s (SWITCH TO DISPLAY 1)...";
+            }
+            UpdateStatus($"Priority sorted. Drones launching in {secondsLeft}s — Switch to Display 1!", Color.yellow);
+            yield return new WaitForSeconds(1.0f);
+        }
+
+        if (commitButtonText != null)
+        {
+            commitButtonText.text = "DISPATCHING DRONES...";
+        }
+        UpdateStatus($"Dispatching {pendingRequests.Count} request(s) by priority...", Color.green);
 
         // Dispatch requests in priority order to the fleet manager
         if (fleetManager != null)
@@ -246,7 +250,7 @@ public class IncidentDashboardController : MonoBehaviour
 
                 if (dispatched)
                 {
-                    // Remove card from queue visual
+                    // Remove card from queue visual as drone is dispatched
                     GameObject cardToRemove = activeQueueCards.Find(c => c != null && c.name == "QueueCard_" + req.requestId);
                     if (cardToRemove != null)
                     {
@@ -256,7 +260,7 @@ public class IncidentDashboardController : MonoBehaviour
                     pendingRequests.Remove(req);
                 }
 
-                // Short delay between dispatches so drones take off smoothly
+                // Short delay between dispatches so drones take off sequentially
                 yield return new WaitForSeconds(1.0f);
             }
         }
@@ -267,7 +271,7 @@ public class IncidentDashboardController : MonoBehaviour
 
         if (commitButtonText != null)
         {
-            commitButtonText.text = "COMMIT & DISPATCH BATCH";
+            commitButtonText.text = "COMMIT & DISPATCH QUEUE";
         }
 
         if (commitButton != null) commitButton.interactable = true;
@@ -286,4 +290,3 @@ public class IncidentDashboardController : MonoBehaviour
         }
     }
 }
-
