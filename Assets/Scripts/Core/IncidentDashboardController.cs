@@ -18,6 +18,7 @@ public class IncidentDashboardController : MonoBehaviour
         public int destinationSector;
         public string incidentType;
         public int priority; // 1 = Highest, 6 = Lowest
+        public bool isCommitted;
     }
 
     [Header("Requests Panel Inputs")]
@@ -35,11 +36,18 @@ public class IncidentDashboardController : MonoBehaviour
     [Header("Fleet Dispatch Reference")]
     public DroneFleetManager fleetManager;
 
+    [Header("Auto-Dispatch Settings")]
+    [Tooltip("How often (in seconds) to check for returned/charged drones when committed requests remain queued.")]
+    public float autoDispatchPollInterval = 0.5f;
+    public float sequentialDispatchDelay = 1.0f;
+
     [Header("Queue State")]
     [SerializeField]
     private List<IncidentRequest> pendingRequests = new List<IncidentRequest>();
     private int nextRequestId = 1;
     private bool isDispatching = false;
+    private Coroutine autoDispatchCoroutine = null;
+    private bool isAutoDispatchRequestInFlight = false;
 
     // Cache of instantiated queue cards mapped by request ID
     private readonly List<GameObject> activeQueueCards = new List<GameObject>();
@@ -114,7 +122,8 @@ public class IncidentDashboardController : MonoBehaviour
             requestId = nextRequestId++,
             destinationSector = sector,
             incidentType = incidentType,
-            priority = priority
+            priority = priority,
+            isCommitted = false
         };
 
         pendingRequests.Add(newReq);
@@ -189,6 +198,14 @@ public class IncidentDashboardController : MonoBehaviour
             return;
         }
 
+        bool hasUncommitted = pendingRequests.Exists(r => !r.isCommitted);
+        if (!hasUncommitted)
+        {
+            StartAutoDispatchIfNeeded();
+            UpdateStatus("Queued requests are already committed — auto-dispatching as drones return.", Color.yellow);
+            return;
+        }
+
         StartCoroutine(CommitAndDispatchRoutine());
     }
 
@@ -198,25 +215,28 @@ public class IncidentDashboardController : MonoBehaviour
         if (commitButton != null) commitButton.interactable = false;
         if (addRequestButton != null) addRequestButton.interactable = false;
 
+        // Pause background auto-dispatcher cleanly before modifying/sorting the committed batch
+        while (isAutoDispatchRequestInFlight)
+        {
+            yield return null;
+        }
+
+        if (autoDispatchCoroutine != null)
+        {
+            StopCoroutine(autoDispatchCoroutine);
+            autoDispatchCoroutine = null;
+        }
+
+        // Mark all currently queued requests as committed
+        foreach (IncidentRequest req in pendingRequests)
+        {
+            req.isCommitted = true;
+        }
+
         // Sort pending requests by Priority ASCENDING (1 is highest, then 2, etc.)
         // Secondary sort: earlier requestId first
-        pendingRequests.Sort((a, b) =>
-        {
-            int pComp = a.priority.CompareTo(b.priority);
-            if (pComp != 0) return pComp;
-            return a.requestId.CompareTo(b.requestId);
-        });
-
-        // Instantly reorder visual cards in the container to reflect priority order!
-        for (int i = 0; i < pendingRequests.Count; i++)
-        {
-            int reqId = pendingRequests[i].requestId;
-            GameObject matchingCard = activeQueueCards.Find(c => c != null && c.name == "QueueCard_" + reqId);
-            if (matchingCard != null)
-            {
-                matchingCard.transform.SetSiblingIndex(i);
-            }
-        }
+        SortPendingRequestsByPriority();
+        SyncQueueCardOrder();
 
         // 5-second countdown buffer to allow switching Game View to Display 1
         for (int secondsLeft = 5; secondsLeft > 0; secondsLeft--)
@@ -235,33 +255,33 @@ public class IncidentDashboardController : MonoBehaviour
         }
         UpdateStatus($"Dispatching {pendingRequests.Count} request(s) by priority...", Color.green);
 
-        // Dispatch requests in priority order to the fleet manager
+        // Dispatch committed requests in priority order to the fleet manager
         if (fleetManager != null)
         {
             List<IncidentRequest> dispatchList = new List<IncidentRequest>(pendingRequests);
 
             foreach (IncidentRequest req in dispatchList)
             {
-                bool dispatched = false;
-                yield return StartCoroutine(fleetManager.DispatchIncidentSector(req.destinationSector, req.requestId, req.priority, success =>
-                {
-                    dispatched = success;
-                }));
+                DroneFleetManager.DispatchOutcome outcome = DroneFleetManager.DispatchOutcome.Failed;
+                yield return StartCoroutine(fleetManager.DispatchIncidentSector(
+                    req.destinationSector,
+                    req.requestId,
+                    req.priority,
+                    result => outcome = result,
+                    verboseLogging: true
+                ));
 
-                if (dispatched)
+                if (outcome == DroneFleetManager.DispatchOutcome.Dispatched)
                 {
-                    // Remove card from queue visual as drone is dispatched
-                    GameObject cardToRemove = activeQueueCards.Find(c => c != null && c.name == "QueueCard_" + req.requestId);
-                    if (cardToRemove != null)
-                    {
-                        activeQueueCards.Remove(cardToRemove);
-                        Destroy(cardToRemove);
-                    }
-                    pendingRequests.Remove(req);
+                    RemoveRequestFromQueue(req);
+
+                    // Short delay between dispatches so drones take off sequentially
+                    yield return new WaitForSeconds(sequentialDispatchDelay);
                 }
-
-                // Short delay between dispatches so drones take off sequentially
-                yield return new WaitForSeconds(1.0f);
+                else if (outcome == DroneFleetManager.DispatchOutcome.Failed)
+                {
+                    req.isCommitted = false;
+                }
             }
         }
         else
@@ -278,7 +298,151 @@ public class IncidentDashboardController : MonoBehaviour
         if (addRequestButton != null) addRequestButton.interactable = true;
         isDispatching = false;
 
-        UpdateStatus("Dispatch sequence complete.", Color.white);
+        int remainingCommitted = GetCommittedRequestCount();
+        if (remainingCommitted > 0)
+        {
+            UpdateStatus($"{remainingCommitted} committed request(s) queued — will auto-dispatch as drones return.", Color.yellow);
+            StartAutoDispatchIfNeeded();
+        }
+        else
+        {
+            UpdateStatus("Dispatch sequence complete.", Color.white);
+        }
+    }
+
+    private void StartAutoDispatchIfNeeded()
+    {
+        if (autoDispatchCoroutine == null && GetCommittedRequestCount() > 0)
+        {
+            autoDispatchCoroutine = StartCoroutine(AutoDispatchCommittedQueueRoutine());
+        }
+    }
+
+    /// <summary>
+    /// Continuously monitors committed requests that remained queued due to busy or charging drones,
+    /// and automatically dispatches them in priority order once a drone returns and has sufficient battery.
+    /// </summary>
+    private IEnumerator AutoDispatchCommittedQueueRoutine()
+    {
+        while (GetCommittedRequestCount() > 0)
+        {
+            if (isDispatching || fleetManager == null || !fleetManager.HasAvailableParkedDrone())
+            {
+                yield return new WaitForSeconds(autoDispatchPollInterval);
+                continue;
+            }
+
+            // Gather committed requests in strict priority order
+            List<IncidentRequest> committedList = pendingRequests.FindAll(r => r.isCommitted);
+            committedList.Sort((a, b) =>
+            {
+                int pComp = a.priority.CompareTo(b.priority);
+                if (pComp != 0) return pComp;
+                return a.requestId.CompareTo(b.requestId);
+            });
+
+            bool dispatchedAnyThisPass = false;
+
+            foreach (IncidentRequest req in committedList)
+            {
+                if (isDispatching || !fleetManager.HasAvailableParkedDrone())
+                    break;
+
+                DroneFleetManager.DispatchOutcome outcome = DroneFleetManager.DispatchOutcome.Failed;
+                isAutoDispatchRequestInFlight = true;
+
+                yield return StartCoroutine(fleetManager.DispatchIncidentSector(
+                    req.destinationSector,
+                    req.requestId,
+                    req.priority,
+                    result => outcome = result,
+                    verboseLogging: false
+                ));
+
+                isAutoDispatchRequestInFlight = false;
+
+                if (outcome == DroneFleetManager.DispatchOutcome.Dispatched)
+                {
+                    dispatchedAnyThisPass = true;
+                    RemoveRequestFromQueue(req);
+
+                    int remaining = GetCommittedRequestCount();
+                    Debug.Log($"[Dashboard] Auto-dispatched queued Request #{req.requestId} (Sector {req.destinationSector}, Priority {req.priority}). Remaining committed: {remaining}");
+
+                    if (remaining > 0)
+                    {
+                        UpdateStatus($"Auto-dispatched Request #{req.requestId}. {remaining} committed request(s) still queued.", Color.green);
+                        yield return new WaitForSeconds(sequentialDispatchDelay);
+                    }
+                    else
+                    {
+                        UpdateStatus("All committed requests dispatched.", Color.white);
+                    }
+                }
+                else if (outcome == DroneFleetManager.DispatchOutcome.WaitingForDrone)
+                {
+                    // Preserve strict priority order while the parked drone finishes charging
+                    break;
+                }
+                else
+                {
+                    // Uncommit failed request so it does not stall remaining queued requests
+                    req.isCommitted = false;
+                }
+            }
+
+            if (!dispatchedAnyThisPass)
+            {
+                yield return new WaitForSeconds(autoDispatchPollInterval);
+            }
+        }
+
+        autoDispatchCoroutine = null;
+    }
+
+    private void SortPendingRequestsByPriority()
+    {
+        pendingRequests.Sort((a, b) =>
+        {
+            int pComp = a.priority.CompareTo(b.priority);
+            if (pComp != 0) return pComp;
+            return a.requestId.CompareTo(b.requestId);
+        });
+    }
+
+    private void SyncQueueCardOrder()
+    {
+        for (int i = 0; i < pendingRequests.Count; i++)
+        {
+            int reqId = pendingRequests[i].requestId;
+            GameObject matchingCard = activeQueueCards.Find(c => c != null && c.name == "QueueCard_" + reqId);
+            if (matchingCard != null)
+            {
+                matchingCard.transform.SetSiblingIndex(i);
+            }
+        }
+    }
+
+    private void RemoveRequestFromQueue(IncidentRequest req)
+    {
+        GameObject cardToRemove = activeQueueCards.Find(c => c != null && c.name == "QueueCard_" + req.requestId);
+        if (cardToRemove != null)
+        {
+            activeQueueCards.Remove(cardToRemove);
+            Destroy(cardToRemove);
+        }
+        pendingRequests.Remove(req);
+    }
+
+    private int GetCommittedRequestCount()
+    {
+        int count = 0;
+        for (int i = 0; i < pendingRequests.Count; i++)
+        {
+            if (pendingRequests[i].isCommitted)
+                count++;
+        }
+        return count;
     }
 
     private void UpdateStatus(string message, Color? color = null)

@@ -1479,7 +1479,7 @@ public class DroneRouteController : MonoBehaviour
     [Range(0f, 100f)]
     public float battery = 100f;
 
-    public float chargingRate = 5f;
+    public float chargingRate = 2f;
     public float batteryPerTravelTimeUnit = 0.5f;
     public float batteryReserve = 10f;
 
@@ -1505,6 +1505,10 @@ public class DroneRouteController : MonoBehaviour
     public bool IsOnMission { get; private set; }
     public bool IsAvailable => !IsOnMission;
     public bool IsCharging { get; private set; }
+    public bool IsReturning => isReturning;
+    public int CurrentDestinationSector { get; private set; } = -1;
+    public Vector3 CurrentIncidentPosition { get; private set; }
+    public int[] CurrentOutboundRoute { get; private set; }
 
     // Shared route waypoint used by the fleet.
     private Transform baseWaypoint;
@@ -1621,6 +1625,9 @@ public class DroneRouteController : MonoBehaviour
         IsOnMission = true;
         IsCharging = false;
         isReturning = false;
+        CurrentDestinationSector = destinationSector;
+        CurrentIncidentPosition = incidentPosition;
+        CurrentOutboundRoute = outboundRoute;
 
         // Deduct estimated outbound battery cost.
         battery = Mathf.Max(
@@ -1702,6 +1709,8 @@ public class DroneRouteController : MonoBehaviour
 
         isReturning = false;
         IsOnMission = false;
+        CurrentDestinationSector = -1;
+        CurrentOutboundRoute = null;
 
         // Charging begins in Update() only after the drone
         // is within parkingTolerance of its own home position.

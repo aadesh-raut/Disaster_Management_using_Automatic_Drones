@@ -43,3 +43,6 @@ vcpkg_installed/
 # Compiled executables
 drone_rescue
 api_server
+
+PROJECT_TECHNICAL_DOCUMENTATION
+info.txt
